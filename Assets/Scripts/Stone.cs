@@ -6,7 +6,7 @@ public class Stone : MonoBehaviour
 {
     [Header("彈弓上的兩個點")]
     public Transform LinePoint1, LinePoint2;
-    public bool IsLine = true;
+	public CameraFollow _CameraFollow;
     [Range(0, 1.5f)]
     public float DragRadius;
     public float ForcePower;
@@ -15,6 +15,7 @@ public class Stone : MonoBehaviour
     Vector2 DragCenterPos;
     Vector2 OffsetFromCenter;
 
+	bool IsLine;
     bool isCanDrag;
     Transform m_Transform;
     LineRenderer LineRenderer1, LineRenderer2;
@@ -36,11 +37,20 @@ public class Stone : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+		if (transform.position.x > 0) {
+			_CameraFollow.DoFollow (this.gameObject);
+		}
         if (IsLine)
         {
             DrawLine();
         }
+		if (!isCanDrag) 
+		{
+			if (m_Rigidbody2D.velocity.magnitude == 0) 
+			{
+				//DestroySelf ();
+			}
+		}
     }
     public void Init()
     {
@@ -55,9 +65,6 @@ public class Stone : MonoBehaviour
         LineRenderer1.SetPosition(1, m_Transform.position);
         LineRenderer2.SetPosition(0, LinePoint2.position);
         LineRenderer2.SetPosition(1, m_Transform.position);
-
-
-
     }
     public void Shoot(Vector2 force)
     {
@@ -66,8 +73,7 @@ public class Stone : MonoBehaviour
         LineRenderer1.SetPosition(1, LinePoint1.position);
         LineRenderer2.SetPosition(1, LinePoint2.position);
         m_Rigidbody2D.isKinematic = false;
-        float power = ForcePower / DragRadius * force.magnitude;
-        print(force + "" + power);
+		float power = ForcePower / DragRadius * force.magnitude;
         m_Rigidbody2D.AddForce(force.normalized * power, ForceMode2D.Force);
     }
 
@@ -100,12 +106,9 @@ public class Stone : MonoBehaviour
             Shoot(offset);
         }
     }
-    void DestroySelf()
+	public void DestroySelf()
     {
-        if (m_GameMain.GetStoneNum() > 0)
-        {
-            m_GameMain.InsNewStone();
-        }
+		m_GameMain.InsNewStone();
         Destroy(this.gameObject);
     }
 }
