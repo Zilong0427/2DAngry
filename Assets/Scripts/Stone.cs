@@ -10,11 +10,13 @@ public class Stone : MonoBehaviour
     [Range(0, 1.5f)]
     public float DragRadius;
     public float ForcePower;
+	public GameObject AudioControl;
 
     public GameMain m_GameMain;
     Vector2 DragCenterPos;
     Vector2 OffsetFromCenter;
 
+	bool FollowOnce;
 	bool IsLine;
     bool isCanDrag;
     Transform m_Transform;
@@ -24,21 +26,18 @@ public class Stone : MonoBehaviour
     void Start()
     {
 
-        LineRenderer1 = LinePoint1.GetComponent<LineRenderer>();
-        LineRenderer2 = LinePoint2.GetComponent<LineRenderer>();
-        LineRenderer1.sortingLayerName = "Line";
-        LineRenderer2.sortingLayerName = "Line";
-        DragCenterPos = (LinePoint1.position + LinePoint2.position) / 2;
-        m_Rigidbody2D = GetComponent<Rigidbody2D>();
-        m_Transform = GetComponent<Transform>();
-        Init();
+        
+        //Init();
     }
 
     // Update is called once per frame
     void Update()
     {
-		if (transform.position.x > 0) {
+		if (transform.position.x > 0 && FollowOnce) {
 			_CameraFollow.DoFollow (this.gameObject);
+		}
+		if (transform.position.x >= 10 && FollowOnce) {
+			FollowOnce = false;
 		}
         if (IsLine)
         {
@@ -54,8 +53,16 @@ public class Stone : MonoBehaviour
     }
     public void Init()
     {
+		LineRenderer1 = LinePoint1.GetComponent<LineRenderer>();
+		LineRenderer2 = LinePoint2.GetComponent<LineRenderer>();
+		LineRenderer1.sortingLayerName = "Line";
+		LineRenderer2.sortingLayerName = "Line";
+		DragCenterPos = (LinePoint1.position + LinePoint2.position) / 2;
+		m_Rigidbody2D = GetComponent<Rigidbody2D>();
+		m_Transform = GetComponent<Transform>();
         isCanDrag = true;
         m_Rigidbody2D.isKinematic = true;
+		FollowOnce = true;
         IsLine = true;
 
     }
@@ -75,6 +82,8 @@ public class Stone : MonoBehaviour
         m_Rigidbody2D.isKinematic = false;
 		float power = ForcePower / DragRadius * force.magnitude;
         m_Rigidbody2D.AddForce(force.normalized * power, ForceMode2D.Force);
+		AudioControl.GetComponent<AudioControl> ().PlayAudio (0);
+		StartCoroutine (DestroySelf ());
     }
 
 
@@ -106,9 +115,14 @@ public class Stone : MonoBehaviour
             Shoot(offset);
         }
     }
-	public void DestroySelf()
+	IEnumerator  DestroySelf()
     {
+		yield return new WaitForSeconds(5f);
 		m_GameMain.InsNewStone();
         Destroy(this.gameObject);
     }
+	void OnCollisionEnter2D(Collision2D collision)
+	{
+		AudioControl.GetComponent<AudioControl> ().PlayAudio (1);
+	}
 }
